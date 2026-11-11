@@ -1,0 +1,128 @@
+---
+import LanguageSwitch from './LanguageSwitch.astro';
+import { t, pathFor, withBase, anchors as allAnchors, type Locale, type RouteKey } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+  page: RouteKey;
+}
+
+const { locale, page } = Astro.props;
+const dict = t(locale);
+const home = pathFor('home', locale);
+const anchors = allAnchors[locale];
+
+const links = [
+  { href: `${home}#${anchors.services}`, label: dict.header.nav.services },
+  { href: `${home}#${anchors.about}`, label: dict.header.nav.about },
+  { href: `${home}#${anchors.contact}`, label: dict.header.nav.contact },
+];
+---
+
+<header class="border-b border-line bg-paper">
+  <div class="page flex flex-wrap items-center justify-between gap-x-8 gap-y-3 py-4">
+    <a href={home} class="flex items-center gap-3 text-ink no-underline" aria-label={dict.header.homeLabel}>
+      <img src={withBase('/logo-mark.svg')} width="44" height="44" alt="" class="size-11 shrink-0" />
+      <span class="leading-tight">
+        <span class="block text-xl font-semibold">{dict.header.brand}</span>
+        <span class="block text-sm text-ink-muted">{dict.header.tagline}</span>
+      </span>
+    </a>
+
+    <button
+      type="button"
+      class="menu-toggle items-center rounded-[2px] border border-field px-3 py-1.5 font-semibold text-ink transition-colors duration-150 hover:border-ink"
+      aria-expanded="false"
+      aria-controls="site-nav"
+    >
+      {dict.header.menuOpen}
+    </button>
+
+    <nav id="site-nav" class="site-nav" aria-label={dict.header.navLabel}>
+      <ul class="flex flex-wrap gap-x-7 gap-y-2">
+        {
+          links.map((link) => (
+            <li>
+              <a class="nav-link" href={link.href}>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <LanguageSwitch locale={locale} page={page} />
+    </nav>
+  </div>
+</header>
+
+<style>
+  .menu-toggle {
+    display: none;
+  }
+
+  .site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 2rem;
+  }
+
+  @media (max-width: 63.99rem) {
+    /* Mit JavaScript: Ausklappmenü. Ohne JavaScript bleibt die Navigation sichtbar. */
+    :global(.js) .menu-toggle {
+      display: inline-flex;
+    }
+    :global(.js) .site-nav {
+      display: none;
+    }
+    :global(.js) .site-nav.is-open {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      border-top: 1px solid var(--color-line);
+      padding-top: 1rem;
+      padding-bottom: 0.5rem;
+      gap: 1rem;
+    }
+    :global(.js) .site-nav.is-open ul {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .site-nav {
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .site-nav {
+      gap: 2.5rem;
+    }
+  }
+</style>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
+  const nav = document.getElementById('site-nav');
+
+  if (toggle && nav) {
+    const setOpen = (open: boolean) => {
+      nav.classList.toggle('is-open', open);
+      // Beschriftung bleibt gleich, der Zustand steht in aria-expanded
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+
+    toggle.addEventListener('click', () => {
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+  }
+</script>

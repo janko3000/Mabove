@@ -1,0 +1,2 @@
+# Bibliothek wird nur von contact.php eingebunden, nie direkt aufgerufen
+Require all denied

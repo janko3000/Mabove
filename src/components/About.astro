@@ -1,0 +1,36 @@
+---
+import { Picture } from 'astro:assets';
+import portrait from '../assets/portrait-placeholder.jpg';
+import { t, anchors, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const dict = t(locale);
+const id = anchors[locale].about;
+---
+
+<section id={id} class="storey" aria-labelledby={`${id}-title`}>
+  <div class="page storey-grid">
+    <h2 id={`${id}-title`} class="storey-title">{dict.about.title}</h2>
+
+    <div class="grid gap-8 sm:grid-cols-[13rem_minmax(0,1fr)] sm:items-start sm:gap-10">
+      <Picture
+        src={portrait}
+        alt={dict.about.imageAlt}
+        formats={['avif', 'webp']}
+        widths={[208, 416, 624]}
+        sizes="(min-width: 40rem) 13rem, 60vw"
+        class="block aspect-[4/5] w-[60vw] max-w-[13rem] rounded-[2px] bg-line object-cover sm:w-full"
+      />
+
+      <div class="measure">
+        <p class="text-[1.25rem] leading-snug font-semibold">{dict.about.name}</p>
+        <p class="text-ink-muted">{dict.about.role}</p>
+        <p class="mt-5">{dict.about.text}</p>
+      </div>
+    </div>
+  </div>
+</section>

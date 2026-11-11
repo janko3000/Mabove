@@ -1,0 +1,47 @@
+---
+import { t, pathFor, otherLocale, type Locale, type RouteKey } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+  page: RouteKey;
+}
+
+const { locale, page } = Astro.props;
+const dict = t(locale);
+const other = otherLocale(locale);
+const otherHref = pathFor(page, other);
+
+const items = (['de', 'en'] as const).map((code) => ({
+  code,
+  label: code.toUpperCase(),
+  current: code === locale,
+}));
+---
+
+<ul class="lang-switch flex items-center text-base" aria-label={dict.header.languageLabel}>
+  {
+    items.map((item) => (
+      <li>
+        {item.current ? (
+          <span class="font-semibold" aria-current="true">
+            <span aria-hidden="true">{item.label}</span>
+            <span class="sr-only">{dict.header.languageCurrent}</span>
+          </span>
+        ) : (
+          <a class="nav-link" href={otherHref} hreflang={other} lang={other}>
+            <span aria-hidden="true">{item.label}</span>
+            <span class="sr-only">{dict.header.languageOther}</span>
+          </a>
+        )}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .lang-switch > li + li::before {
+    content: '/';
+    color: var(--color-ink-muted);
+    padding-inline: 0.4rem;
+  }
+</style>

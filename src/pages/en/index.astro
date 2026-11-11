@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Hero from '../../components/Hero.astro';
+import Services from '../../components/Services.astro';
+import Advantages from '../../components/Advantages.astro';
+import Region from '../../components/Region.astro';
+import About from '../../components/About.astro';
+import Contact from '../../components/Contact.astro';
+import { t } from '../../i18n/utils';
+
+const locale = 'en';
+const dict = t(locale);
+---
+
+<BaseLayout locale={locale} page="home" title={dict.meta.title} description={dict.meta.description}>
+  <Hero locale={locale} />
+  <Services locale={locale} />
+  <Advantages locale={locale} />
+  <Region locale={locale} />
+  <About locale={locale} />
+  <Contact locale={locale} />
+</BaseLayout>

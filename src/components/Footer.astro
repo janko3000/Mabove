@@ -1,0 +1,23 @@
+---
+import { t, pathFor, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const dict = t(locale);
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-line">
+  <div class="page flex flex-col gap-3 py-8 text-[0.9375rem] text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+    <p>© {year} {dict.footer.copyright}</p>
+    <nav aria-label={dict.footer.legalLabel}>
+      <ul class="flex gap-6">
+        <li><a class="nav-link text-ink-muted hover:text-gold-dark" href={pathFor('imprint', locale)}>{dict.footer.imprint}</a></li>
+        <li><a class="nav-link text-ink-muted hover:text-gold-dark" href={pathFor('privacy', locale)}>{dict.footer.privacy}</a></li>
+      </ul>
+    </nav>
+  </div>
+</footer>

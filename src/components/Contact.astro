@@ -1,0 +1,347 @@
+---
+import { t, anchors, pathFor, withBase, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const dict = t(locale);
+const c = dict.contact;
+const f = c.form;
+const id = anchors[locale].contact;
+
+const accept = [
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'image/jpeg',
+  'image/png',
+].join(',');
+
+const clientStrings = {
+  ...c.messages,
+  fileRemove: f.fileRemove,
+  fileRemoveLabel: f.fileRemoveLabel,
+  submit: f.submit,
+  sending: f.sending,
+};
+---
+
+<section id={id} class="storey bg-stone" aria-labelledby={`${id}-title`}>
+  <div class="page storey-grid">
+    <h2 id={`${id}-title`} class="storey-title">{c.title}</h2>
+
+    <div>
+      <p class="measure">{c.intro}</p>
+
+      <div class="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_14rem] lg:gap-14">
+        <form
+          id="contact-form"
+          class="grid gap-6"
+          action={withBase('/api/contact.php')}
+          method="post"
+          enctype="multipart/form-data"
+          aria-label={f.label}
+          data-strings={JSON.stringify(clientStrings)}
+          data-lang={locale}
+        >
+          <!-- Statusmeldungen nach Versand ohne JavaScript -->
+          <p id="status-sent" class="status-target form-status" role="status">{c.messages.success}</p>
+          <p id="status-error" class="status-target form-status" data-state="error" role="alert">{c.messages.error}</p>
+          <p id="status-file" class="status-target form-status" data-state="error" role="alert">{c.messages.file}</p>
+
+          <input type="hidden" name="lang" value={locale} />
+          <input type="hidden" name="elapsed" value="" />
+
+          <div class="hp" aria-hidden="true">
+            <label for="cf-website">{f.honeypot}</label>
+            <input id="cf-website" type="text" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <div>
+            <label class="field-label" for="cf-name">{f.name}</label>
+            <input id="cf-name" class="field-input" type="text" name="name" required maxlength="100" autocomplete="name" />
+            <p id="cf-name-error" class="field-error" hidden></p>
+          </div>
+
+          <div>
+            <label class="field-label" for="cf-email">{f.email}</label>
+            <input id="cf-email" class="field-input" type="email" name="email" required maxlength="200" autocomplete="email" spellcheck="false" />
+            <p id="cf-email-error" class="field-error" hidden></p>
+          </div>
+
+          <div>
+            <label class="field-label" for="cf-message">{f.message}</label>
+            <textarea id="cf-message" class="field-input" name="message" rows="6" required maxlength="5000"></textarea>
+            <p id="cf-message-error" class="field-error" hidden></p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <input
+              id="cf-quote"
+              type="checkbox"
+              name="quote"
+              value="1"
+              class="size-5 shrink-0 accent-gold-dark"
+              aria-controls="cf-upload"
+              aria-expanded="true"
+            />
+            <label for="cf-quote" class="font-semibold">{f.quote}</label>
+          </div>
+
+          <div id="cf-upload" class="grid gap-2 border-l-2 border-gold pl-4 sm:pl-5">
+            <label class="field-label !mb-0" for="cf-files">{f.files}</label>
+            <p id="cf-files-hint" class="measure">{f.filesHint}</p>
+            <p id="cf-files-limits" class="field-hint">{f.filesLimits}</p>
+            <input
+              id="cf-files"
+              class="file-input mt-2"
+              type="file"
+              name="files[]"
+              multiple
+              accept={accept}
+              aria-describedby="cf-files-hint cf-files-limits"
+            />
+            <p id="cf-files-error" class="field-error" hidden></p>
+            <ul id="cf-files-list" class="ledger mt-2" aria-label={f.filesListLabel} hidden></ul>
+          </div>
+
+          <div class="grid gap-4">
+            <div>
+              <button type="submit" class="btn">{f.submit}</button>
+            </div>
+            <p class="field-hint measure">
+              {f.privacyBefore}<a class="link" href={pathFor('privacy', locale)}>{f.privacyLink}</a>{f.privacyAfter}
+            </p>
+            <p id="cf-status" class="form-status" role="status" aria-live="polite" hidden></p>
+          </div>
+        </form>
+
+        <div>
+          <h3 class="sr-only">{c.detailsLabel}</h3>
+          <address class="accent-line not-italic">
+            <span class="block font-semibold">{c.company}</span>
+            <span class="block">{c.companyLong}</span>
+            <span class="mt-3 block">{c.street}</span>
+            <span class="block">{c.city}</span>
+            <a class="link mt-3 inline-block" href={`mailto:${c.email}`}>{c.email}</a>
+          </address>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  type Strings = Record<string, string>;
+
+  const ALLOWED_EXT = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'];
+  const MAX_FILE = 10 * 1024 * 1024;
+  const MAX_TOTAL = 15 * 1024 * 1024;
+  const MAX_COUNT = 5;
+
+  const form = document.querySelector<HTMLFormElement>('#contact-form');
+  if (form) initContactForm(form);
+
+  function initContactForm(form: HTMLFormElement) {
+    const s: Strings = JSON.parse(form.dataset.strings ?? '{}');
+    const lang = form.dataset.lang === 'en' ? 'en' : 'de-CH';
+    const loadedAt = Date.now();
+
+    const quote = form.querySelector<HTMLInputElement>('#cf-quote')!;
+    const upload = form.querySelector<HTMLElement>('#cf-upload')!;
+    const fileInput = form.querySelector<HTMLInputElement>('#cf-files')!;
+    const fileList = form.querySelector<HTMLUListElement>('#cf-files-list')!;
+    const status = form.querySelector<HTMLElement>('#cf-status')!;
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const elapsed = form.querySelector<HTMLInputElement>('input[name="elapsed"]')!;
+
+    const fields = {
+      name: form.querySelector<HTMLInputElement>('#cf-name')!,
+      email: form.querySelector<HTMLInputElement>('#cf-email')!,
+      message: form.querySelector<HTMLTextAreaElement>('#cf-message')!,
+    };
+
+    let files: File[] = [];
+
+    // Mit JavaScript übernimmt das Skript die Prüfung und die Meldungen.
+    form.noValidate = true;
+
+    // Upload-Feld nur bei aktivierter Offertenanfrage
+    const syncUpload = () => {
+      upload.hidden = !quote.checked;
+      quote.setAttribute('aria-expanded', String(quote.checked));
+    };
+    quote.addEventListener('change', syncUpload);
+    syncUpload();
+
+    // «Offerte anfragen» im Hero setzt die Checkbox
+    document.querySelectorAll<HTMLAnchorElement>('[data-quote]').forEach((link) => {
+      link.addEventListener('click', () => {
+        quote.checked = true;
+        syncUpload();
+      });
+    });
+
+    // Fehleranzeige pro Feld
+    const setError = (input: HTMLInputElement | HTMLTextAreaElement, message: string) => {
+      const error = document.getElementById(`${input.id}-error`);
+      if (!error) return;
+      const described = (input.getAttribute('aria-describedby') ?? '')
+        .split(' ')
+        .filter((token) => token && token !== error.id);
+      if (message) {
+        error.textContent = message;
+        error.hidden = false;
+        input.setAttribute('aria-invalid', 'true');
+        described.push(error.id);
+      } else {
+        error.textContent = '';
+        error.hidden = true;
+        input.removeAttribute('aria-invalid');
+      }
+      if (described.length) input.setAttribute('aria-describedby', described.join(' '));
+      else input.removeAttribute('aria-describedby');
+    };
+
+    const validateField = (key: keyof typeof fields): boolean => {
+      const input = fields[key];
+      const value = input.value.trim();
+      if (!value) {
+        setError(input, s.required);
+        return false;
+      }
+      if (key === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        setError(input, s.email);
+        return false;
+      }
+      setError(input, '');
+      return true;
+    };
+
+    (Object.keys(fields) as (keyof typeof fields)[]).forEach((key) => {
+      fields[key].addEventListener('input', () => {
+        if (fields[key].getAttribute('aria-invalid') === 'true') validateField(key);
+      });
+    });
+
+    // Dateien
+    const formatSize = (bytes: number) => {
+      const mb = bytes / (1024 * 1024);
+      const nf = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
+      return mb >= 0.1 ? `${nf.format(mb)} MB` : `${nf.format(Math.max(1, Math.round(bytes / 1024)))} KB`;
+    };
+
+    const renderFiles = () => {
+      fileList.replaceChildren(
+        ...files.map((file, index) => {
+          const li = document.createElement('li');
+          li.className = 'flex items-center justify-between gap-4';
+
+          const label = document.createElement('span');
+          label.className = 'min-w-0 break-words';
+          label.textContent = `${file.name} (${formatSize(file.size)})`;
+
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'link shrink-0 cursor-pointer';
+          remove.textContent = s.fileRemove;
+          remove.setAttribute('aria-label', `${s.fileRemoveLabel} ${file.name}`);
+          remove.addEventListener('click', () => {
+            files.splice(index, 1);
+            renderFiles();
+            setError(fileInput, '');
+            fileInput.focus();
+          });
+
+          li.append(label, remove);
+          return li;
+        }),
+      );
+      fileList.hidden = files.length === 0;
+    };
+
+    fileInput.addEventListener('change', () => {
+      let message = '';
+      for (const file of Array.from(fileInput.files ?? [])) {
+        const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+        const total = files.reduce((sum, f) => sum + f.size, 0);
+        const duplicate = files.some((f) => f.name === file.name && f.size === file.size);
+        if (duplicate) continue;
+        if (!ALLOWED_EXT.includes(ext) || file.size > MAX_FILE || file.size === 0) {
+          message = s.file;
+        } else if (files.length >= MAX_COUNT) {
+          message = s.tooMany;
+        } else if (total + file.size > MAX_TOTAL) {
+          message = s.totalSize;
+        } else {
+          files.push(file);
+        }
+      }
+      fileInput.value = '';
+      renderFiles();
+      setError(fileInput, message);
+    });
+
+    const showStatus = (message: string, state: 'ok' | 'error') => {
+      status.textContent = message;
+      status.dataset.state = state;
+      status.hidden = false;
+    };
+
+    const errorMessage = (code: unknown) => {
+      if (code === 'file') return s.file;
+      if (code === 'required') return s.required;
+      if (code === 'email') return s.email;
+      return s.error;
+    };
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      status.hidden = true;
+
+      const results = (Object.keys(fields) as (keyof typeof fields)[]).map(validateField);
+      if (results.includes(false)) {
+        const firstInvalid = Object.values(fields).find((input) => input.getAttribute('aria-invalid') === 'true');
+        firstInvalid?.focus();
+        return;
+      }
+
+      elapsed.value = String(Date.now() - loadedAt);
+      const data = new FormData(form);
+      data.delete('files[]');
+      if (quote.checked) files.forEach((file) => data.append('files[]', file, file.name));
+
+      submit.disabled = true;
+      submit.textContent = s.sending;
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: data,
+          headers: { Accept: 'application/json' },
+        });
+        const result = await response.json().catch(() => ({ ok: false }));
+
+        if (response.ok && result.ok) {
+          form.reset();
+          files = [];
+          renderFiles();
+          syncUpload();
+          showStatus(s.success, 'ok');
+        } else {
+          showStatus(errorMessage(result.error), 'error');
+        }
+      } catch {
+        showStatus(s.error, 'error');
+      } finally {
+        submit.disabled = false;
+        submit.textContent = s.submit;
+      }
+    });
+  }
+</script>

@@ -1,0 +1,47 @@
+name: Deploy to Hostpoint
+
+# Vorerst nur manuell starten (GitHub → Actions → "Deploy to Hostpoint" → "Run workflow").
+# Für automatisches Live-Deploy bei jedem Push die drei Zeilen unten wieder aktivieren.
+on:
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Prüfen, dass PHPMailer mitgeliefert wird
+        run: test -f dist/api/PHPMailer/src/PHPMailer.php
+
+      # Upload per FTPS. Zugangsdaten nur als GitHub Secrets:
+      # FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, FTP_SERVER_DIR (z. B. /www/mabove.ch/)
+      - name: Upload auf Hostpoint (FTPS)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./dist/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}

@@ -1,0 +1,91 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { t, pathFor, withBase, type Locale, type RouteKey } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+  page: RouteKey;
+  title: string;
+  description: string;
+}
+
+const { locale, page, title, description } = Astro.props;
+const dict = t(locale);
+const site = Astro.site ?? new URL('https://www.mabove.ch');
+
+const canonical = new URL(pathFor(page, locale), site).href;
+const hrefDe = new URL(pathFor(page, 'de'), site).href;
+const hrefEn = new URL(pathFor(page, 'en'), site).href;
+const ogImage = new URL(withBase('/og-image.png'), site).href;
+const logoUrl = new URL(withBase('/logo.svg'), site).href;
+
+const jsonLd =
+  page === 'home'
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'LocalBusiness',
+        name: 'mabove – Markus Bolliger Verwaltungen',
+        url: new URL(pathFor('home', locale), site).href,
+        email: dict.contact.email,
+        image: logoUrl,
+        logo: logoUrl,
+        founder: { '@type': 'Person', name: 'Markus Bolliger' },
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: dict.contact.street,
+          postalCode: '8003',
+          addressLocality: 'Zürich',
+          addressCountry: 'CH',
+        },
+        areaServed: [
+          { '@type': 'City', name: 'Zürich' },
+          { '@type': 'AdministrativeArea', name: 'Zürcher Unterland' },
+          { '@type': 'AdministrativeArea', name: 'Aargau' },
+        ],
+      }
+    : null;
+---
+
+<!doctype html>
+<html lang={locale === 'de' ? 'de-CH' : 'en'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="de" href={hrefDe} />
+    <link rel="alternate" hreflang="en" href={hrefEn} />
+    <link rel="alternate" hreflang="x-default" href={hrefDe} />
+
+    <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="mabove" />
+    <meta property="og:locale" content={dict.ogLocale} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+  </head>
+  <body>
+    <a class="skip-link" href="#inhalt">{dict.skipLink}</a>
+    <Header locale={locale} page={page} />
+    <main id="inhalt" tabindex="-1" class="focus:outline-none">
+      <slot />
+    </main>
+    <Footer locale={locale} />
+  </body>
+</html>

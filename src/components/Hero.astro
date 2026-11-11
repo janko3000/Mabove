@@ -1,0 +1,98 @@
+---
+import { t, anchors, withBase, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const dict = t(locale);
+const a = anchors[locale];
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="page hero-grid">
+    <div class="hero-text">
+      <h1 id="hero-title" class="text-[clamp(1.75rem,8vw,2.75rem)] leading-[1.15] hyphens-auto">
+        {dict.hero.title}
+      </h1>
+      <p class="mt-5 max-w-[34rem] text-[1.1875rem] leading-[1.55] text-ink-muted">
+        {dict.hero.subtitle}
+      </p>
+      <div class="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">
+        <a class="btn" href={`#${a.contact}`} data-quote>{dict.hero.cta}</a>
+        <a class="link" href={`#${a.services}`}>{dict.hero.link}</a>
+      </div>
+    </div>
+
+    <!-- Die drei Geschosslinien des Logos, nach links verlängert -->
+    <div class="hero-floors" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="hero-logo">
+      <img src={withBase('/logo.svg')} width="300" height="300" alt={dict.hero.logoAlt} />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-block: 3.5rem 4rem;
+  }
+
+  .hero-grid {
+    --logo: 10rem;
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  .hero-logo img {
+    display: block;
+    width: var(--logo);
+    height: var(--logo);
+  }
+
+  .hero-floors {
+    display: none;
+  }
+
+  @media (min-width: 64rem) {
+    .hero {
+      padding-block: 6rem;
+    }
+
+    .hero-grid {
+      --logo: 18.75rem;
+      grid-template-columns: minmax(0, 34rem) minmax(3rem, 1fr) var(--logo);
+      align-items: center;
+      column-gap: 2rem;
+    }
+
+    /* Linien auf Höhe der Geschosse im Logo (y = 157, 210, 260 von 400) */
+    .hero-floors {
+      display: block;
+      position: relative;
+      height: var(--logo);
+    }
+    .hero-floors span {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      margin-top: -1px;
+      background: var(--color-gold);
+    }
+    .hero-floors span:nth-child(1) {
+      top: calc(var(--logo) * 157 / 400);
+    }
+    .hero-floors span:nth-child(2) {
+      top: calc(var(--logo) * 210 / 400);
+    }
+    .hero-floors span:nth-child(3) {
+      top: calc(var(--logo) * 260 / 400);
+    }
+  }
+</style>
