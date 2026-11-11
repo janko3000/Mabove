@@ -1,0 +1,15 @@
+# Build
+dist/
+.astro/
+
+# Abhängigkeiten
+node_modules/
+
+# Lokale Konfiguration mit Zugangsdaten – nie committen
+mail-config.php
+.env
+.env.*
+
+# System
+.DS_Store
+Thumbs.db
