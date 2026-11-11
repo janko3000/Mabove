@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://www.mabove.ch',
+  site: 'https://janko3000.github.io',
   base: '/Mabove',
   output: 'static',
   trailingSlash: 'always',
