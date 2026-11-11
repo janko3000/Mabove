@@ -196,10 +196,17 @@ try {
     $mail->isSMTP();
     $mail->Host = $config['smtp_host'];
     $mail->Port = (int) $config['smtp_port'];
-    $mail->SMTPSecure = $config['smtp_secure'] === 'ssl' ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->SMTPAuth = true;
-    $mail->Username = $config['smtp_user'];
-    $mail->Password = $config['smtp_pass'];
+    // 'ssl' (Port 465), 'tls' (Port 587) oder 'none' (nur lokaler Test mit Mailpit)
+    $secure = $config['smtp_secure'] ?? 'ssl';
+    if ($secure === 'none') {
+        $mail->SMTPSecure = '';
+        $mail->SMTPAutoTLS = false;
+    } else {
+        $mail->SMTPSecure = $secure === 'ssl' ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+    }
+    $mail->SMTPAuth = ($config['smtp_user'] ?? '') !== '';
+    $mail->Username = $config['smtp_user'] ?? '';
+    $mail->Password = $config['smtp_pass'] ?? '';
 
     // Absender immer das eigene Postfach (SPF/DKIM), Antwort an die anfragende Person
     $mail->setFrom($config['from'], $config['from_name'] ?? 'mabove.ch');
